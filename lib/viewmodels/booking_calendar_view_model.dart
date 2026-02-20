@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import '../providers/api_provider.dart';
+import '../viewmodels/manage_services_view_model.dart';
 
 /// Final ViewModel in the Create/Edit Service flow.
 /// Takes the raw data assembled by [AddServiceViewModel], mixes it with
@@ -109,6 +111,17 @@ class BookingCalendarViewModel extends ChangeNotifier {
           ),
         ),
       );
+
+      // Refresh the services list BEFORE navigating back
+      try {
+        final manageVm = Provider.of<ManageServicesViewModel>(
+          context,
+          listen: false,
+        );
+        await manageVm.fetchServices();
+      } catch (_) {}
+
+      if (!context.mounted) return;
       Navigator.popUntil(context, ModalRoute.withName('/manage-services'));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -119,8 +132,8 @@ class BookingCalendarViewModel extends ChangeNotifier {
           content: AwesomeSnackbarContent(
             title: 'Error!',
             message: isEdit
-                ? 'Failed to update service'
-                : 'Failed to create service',
+                ? 'Failed to update service. Please check logs.'
+                : 'Failed to create service. Please check logs.',
             contentType: ContentType.failure,
           ),
         ),

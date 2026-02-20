@@ -154,19 +154,15 @@ class ManageServicesView extends StatelessWidget {
   }
 
   Widget _buildServiceImage(String url) {
-    if (url.isEmpty) {
-      return Container(
-        width: 60,
-        height: 60,
-        color: Colors.grey.shade100,
-        child: const Icon(
-          Icons.business_center_rounded,
-          color: Colors.grey,
-          size: 28,
-        ),
-      );
+    // Show a styled placeholder for empty or non-URL image values.
+    // The server stores filenames (e.g. "image.png"), not real URLs.
+    final isRealUrl = url.startsWith('http');
+    final isBase64 = url.startsWith('data:image');
+
+    if (!isRealUrl && !isBase64) {
+      return _buildImagePlaceholder();
     }
-    if (url.startsWith('data:image')) {
+    if (isBase64) {
       try {
         final base64Part = url.contains(',') ? url.split(',').last : url;
         return Image.memory(
@@ -174,27 +170,48 @@ class ManageServicesView extends StatelessWidget {
           width: 60,
           height: 60,
           fit: BoxFit.cover,
-          errorBuilder: (_, _, _) => _buildErrorIcon(),
+          errorBuilder: (_, __, ___) => _buildImagePlaceholder(),
         );
       } catch (e) {
-        return _buildErrorIcon();
+        return _buildImagePlaceholder();
       }
     }
-    if (url.startsWith('http')) {
-      return CachedNetworkImage(
-        imageUrl: url,
-        width: 60,
-        height: 60,
-        fit: BoxFit.cover,
-        placeholder: (context, url) => Shimmer.fromColors(
-          baseColor: Colors.grey.shade300,
-          highlightColor: Colors.grey.shade100,
-          child: Container(width: 60, height: 60, color: Colors.white),
+    // Real HTTP URL
+    return CachedNetworkImage(
+      imageUrl: url,
+      width: 60,
+      height: 60,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => Shimmer.fromColors(
+        baseColor: Colors.grey.shade300,
+        highlightColor: Colors.grey.shade100,
+        child: Container(width: 60, height: 60, color: Colors.white),
+      ),
+      errorWidget: (context, url, error) => _buildImagePlaceholder(),
+    );
+  }
+
+  Widget _buildImagePlaceholder() {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.accentColor.withValues(alpha: 0.15),
+            AppTheme.accentColor.withValues(alpha: 0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        errorWidget: (context, url, error) => _buildErrorIcon(),
-      );
-    }
-    return _buildErrorIcon();
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(
+        Icons.business_center_rounded,
+        color: AppTheme.accentColor.withValues(alpha: 0.6),
+        size: 28,
+      ),
+    );
   }
 
   Widget _buildEmptyState(
@@ -250,42 +267,25 @@ class ManageServicesView extends StatelessWidget {
     );
   }
 
-  Widget _buildErrorIcon() {
-    return Container(
-      width: 60,
-      height: 60,
-      color: Colors.grey.shade200,
-      child: const Icon(Icons.broken_image, color: Colors.grey),
-    );
-  }
-
   Widget _buildShimmerLoading() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16.0),
-      itemCount: 5, // Show 5 skeleton items
-      itemBuilder: (context, index) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12.0),
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppTheme.cardColor,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade200),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.02),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Shimmer.fromColors(
-              baseColor: Colors.grey.shade300,
-              highlightColor: Colors.grey.shade100,
+    return Shimmer.fromColors(
+      baseColor: Colors.grey.shade300,
+      highlightColor: Colors.grey.shade100,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16.0),
+        itemCount: 6,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12.0),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Row(
                 children: [
-                  // Image Skeleton
+                  // Image placeholder
                   Container(
                     width: 60,
                     height: 60,
@@ -295,7 +295,7 @@ class ManageServicesView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Text Skeleton
+                  // Text placeholders
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -319,8 +319,8 @@ class ManageServicesView extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Container(
-                          width: 120,
-                          height: 14,
+                          width: 130,
+                          height: 12,
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(4),
@@ -330,21 +330,34 @@ class ManageServicesView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Action buttons Skeleton
-                  Container(
-                    width: 40,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
+                  // Action buttons placeholder
+                  Column(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
