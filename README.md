@@ -1,32 +1,58 @@
-# Flutter Assignment
+# Service Management Module - Flutter Assignment
 
-## Overview
+## 🚀 Overview
 
-This is a Flutter application refactored from GetX to the Provider architecture. It implements a fully functioning MVVM structure with real-world REST API integrations.
+A high-performance Flutter application built for the **Machine Test Requirements**. This project implements a comprehensive Service Management system using **Provider MVVM** architecture, featuring dynamic category selection, multi-step forms, and real-time API integration with a Node.js backend.
 
-## Features
+## ✨ Features
 
-- Provider-based State Management (View / ViewModel separation)
-- Full CRUD features interacting with a Node.js REST API
-- Image Selection mechanism utilizing the native device gallery
-- Loading states with `shimmer` package for visual feedback
-- Image caching with `cached_network_image`
-- Custom error and success alerts handled beautifully via `awesome_snackbar_content`
-- Pull-to-refresh implementations for real-time data fetching
-- Complete standard application theming with custom Google Fonts
+- **Provider MVVM Architecture**: Strict separation of UI, Business Logic (ViewModel), and Data Layer (ApiProvider).
+- **Multipart API Integration**: Implements the exact machine test payload requirements using `FormData` for real-time file uploads (Logo/Image).
+- **Dynamic Dropdowns**: Auto-loading Sub-Categories based on the selected Category using live API endpoints.
+- **Interactive Calendar**: Custom availability selection logic with multi-select date support and time-slot management.
+- **Optimistic UI Deletion**: Instant item removal with automatic rollback on network failure.
+- **Premium UX/UI**:
+  - **Shimmer Effect**: Beautiful skeleton screens during loading.
+  - **Cached Images**: High-performance image rendering with `cached_network_image`.
+  - **Custom Notifications**: Styled alerts using `awesome_snackbar_content`.
+  - **Smooth Transitions**: Custom `SlideTransition` for all page navigation.
 
-## How to Run
+## 🛠️ Technical Implementation
 
-1. `flutter pub get`
-2. `flutter run`
+- **Base URL**: `https://velvook-node.creatamax.in`
+- **State Management**: `Provider` + `ChangeNotifier`
+- **Authentication**: JWT-based token persistence using `shared_preferences`.
+- **API Methods**: `GET`, `POST` (Multipart), `PUT` (Multipart), and `DELETE`.
 
-## Required Packages
+## 📦 Getting Started
 
-If running locally and dependencies are missing, ensure you run the following:
+1. **Fetch Dependencies**:
 
-```bash
-flutter pub add image_picker
-flutter pub add awesome_snackbar_content
-```
+   ```bash
+   flutter pub get
+   ```
 
-Note: Ensure you fully stop and completely rebuild the APK or iOS runner after fetching Native bindings for the `image_picker`.
+2. **Run the App**:
+
+   ```bash
+   flutter run --release
+   ```
+
+3. **Build APK**:
+   ```bash
+   flutter build apk --release
+   ```
+   _The generated APK can be found at: `build/app/outputs/flutter-apk/app-release.apk`_
+
+## 📜 Assignment Requirements Status
+
+| Requirement                 | Status         |
+| --------------------------- | -------------- |
+| Service Create Form         | ✅ Implemented |
+| Service List/View Page      | ✅ Implemented |
+| Category/Sub-Category API   | ✅ Implemented |
+| FormData Payload Support    | ✅ Implemented |
+| Bearer Token Authentication | ✅ Implemented |
+| Availability Logic          | ✅ Implemented |
+
+---

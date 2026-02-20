@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../models/category_model.dart';
 import '../models/sub_category_model.dart';
@@ -97,53 +98,47 @@ class ApiProvider {
     return [];
   }
 
-  /// Creates a completely new service using MultipartRequest (FormData).
+  /// Creates a completely new service using application/json.
   static Future<bool> createService(Map<String, dynamic> serviceData) async {
     try {
       final url = Uri.parse(AppConstants.servicesUrl);
       final headers = await _getHeaders();
-      // Remove application/json as MultipartRequest sets its own content-type
-      headers.remove('Content-Type');
 
-      var request = http.MultipartRequest('POST', url);
-      request.headers.addAll(headers);
+      final postBody = Map<String, dynamic>.from(serviceData);
 
-      // Add simple fields
-      serviceData.forEach((key, value) {
-        if (key != 'imagePath' && key != 'id' && key != 'availability') {
-          request.fields[key] = value.toString();
-        }
-      });
-
-      // Handle availability (List of Maps) as a JSON string
-      if (serviceData['availability'] != null) {
-        request.fields['availability'] = jsonEncode(
-          serviceData['availability'],
-        );
-      }
-
-      // Handle image file upload
-      final String? imagePath = serviceData['imagePath'] as String?;
+      // Handle image: convert to Base64 if it's a local file path
+      final String? imagePath = postBody['imagePath'] as String?;
       if (imagePath != null &&
           imagePath.isNotEmpty &&
           !imagePath.startsWith('http')) {
-        request.files.add(
-          await http.MultipartFile.fromPath('image', imagePath),
-        );
+        try {
+          final file = File(imagePath);
+          final bytes = await file.readAsBytes();
+          final base64Image = base64Encode(bytes);
+          postBody['image'] = 'data:image/jpeg;base64,$base64Image';
+        } catch (e) {
+          log('Error reading image file for creation: $e', error: e);
+          postBody['image'] = '';
+        }
       } else if (imagePath != null && imagePath.startsWith('http')) {
-        // If it's already a URL, we send it as a string field
-        request.fields['image'] = imagePath;
+        postBody['image'] = imagePath;
+      } else {
+        postBody['image'] = '';
       }
+      postBody.remove('imagePath');
+      postBody.remove('id');
 
-      log('POST (Multipart) $url');
-      log('Fields: ${request.fields}');
+      log('POST $url');
+      log('Body: ${jsonEncode(postBody)}');
 
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
+      final response = await http.post(
+        url,
+        headers: headers,
+        body: jsonEncode(postBody),
+      );
 
       log('Create Service Status Code: ${response.statusCode}');
       log('Create Service Response: ${response.body}');
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
       }
@@ -153,7 +148,7 @@ class ApiProvider {
     return false;
   }
 
-  /// Updates an existing service using MultipartRequest (FormData).
+  /// Updates an existing service using application/json.
   static Future<bool> updateService(
     String id,
     Map<String, dynamic> serviceData,
@@ -161,45 +156,38 @@ class ApiProvider {
     try {
       final url = Uri.parse('${AppConstants.servicesUrl}/$id');
       final headers = await _getHeaders();
-      headers.remove('Content-Type');
 
-      // Note: Some backends require POST with _method=PUT for multipart updates,
-      // but we'll try PUT first as specified in standard REST.
-      var request = http.MultipartRequest('PUT', url);
-      request.headers.addAll(headers);
+      final postBody = Map<String, dynamic>.from(serviceData);
 
-      serviceData.forEach((key, value) {
-        if (key != 'imagePath' && key != 'id' && key != 'availability') {
-          request.fields[key] = value.toString();
-        }
-      });
-
-      if (serviceData['availability'] != null) {
-        request.fields['availability'] = jsonEncode(
-          serviceData['availability'],
-        );
-      }
-
-      final String? imagePath = serviceData['imagePath'] as String?;
+      final String? imagePath = postBody['imagePath'] as String?;
       if (imagePath != null &&
           imagePath.isNotEmpty &&
           !imagePath.startsWith('http')) {
-        request.files.add(
-          await http.MultipartFile.fromPath('image', imagePath),
-        );
+        try {
+          final file = File(imagePath);
+          final bytes = await file.readAsBytes();
+          final base64Image = base64Encode(bytes);
+          postBody['image'] = 'data:image/jpeg;base64,$base64Image';
+        } catch (e) {
+          log('Error reading image for update: $e', error: e);
+        }
       } else if (imagePath != null && imagePath.startsWith('http')) {
-        request.fields['image'] = imagePath;
+        postBody['image'] = imagePath;
       }
+      postBody.remove('imagePath');
+      postBody.remove('id');
 
-      log('PUT (Multipart) $url');
-      log('Fields: ${request.fields}');
+      log('PUT $url');
+      log('Body: ${jsonEncode(postBody)}');
 
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
+      final response = await http.put(
+        url,
+        headers: headers,
+        body: jsonEncode(postBody),
+      );
 
       log('Update Service Status Code: ${response.statusCode}');
       log('Update Service Response: ${response.body}');
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
       }
