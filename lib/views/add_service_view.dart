@@ -107,7 +107,13 @@ class AddServiceView extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                         image: DecorationImage(
                           image: viewModel.selectedImagePath.isNotEmpty
-                              ? FileImage(File(viewModel.selectedImagePath))
+                              ? (viewModel.selectedImagePath.startsWith('http')
+                                        ? NetworkImage(
+                                            viewModel.selectedImagePath,
+                                          )
+                                        : FileImage(
+                                            File(viewModel.selectedImagePath),
+                                          ))
                                     as ImageProvider
                               : const NetworkImage(
                                   'https://picsum.photos/seed/mechanic/200/200',
