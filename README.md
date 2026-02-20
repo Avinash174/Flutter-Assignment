@@ -1,16 +1,21 @@
-# flutter_assignment
+# Flutter Assignment
 
-A new Flutter project.
+## Overview
 
-## Getting Started
+This is a Flutter application refactored from GetX to the Provider architecture. It implements a fully functioning MVVM structure with real-world REST API integrations.
 
-This project is a starting point for a Flutter application.
+## Features
 
-A few resources to get you started if this is your first Flutter project:
+- Provider-based State Management (View / ViewModel separation)
+- Full CRUD features interacting with a Node.js REST API
+- Image Selection mechanism utilizing the native device gallery
+- Loading states with `shimmer` package for visual feedback
+- Image caching with `cached_network_image`
+- Custom error and success alerts handled beautifully via `awesome_snackbar_content`
+- Pull-to-refresh implementations for real-time data fetching
+- Complete standard application theming with custom Google Fonts
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## How to Run
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. `flutter pub get`
+2. `flutter run`

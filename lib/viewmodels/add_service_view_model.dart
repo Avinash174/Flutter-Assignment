@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import '../models/category_model.dart';
 import '../models/sub_category_model.dart';
 import '../models/service_model.dart';
@@ -156,8 +157,15 @@ class AddServiceViewModel extends ChangeNotifier {
   void saveAndContinue(BuildContext context) {
     if (selectedCategory == null || selectedSubCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select Category and Sub-category'),
+        SnackBar(
+          elevation: 0,
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.transparent,
+          content: AwesomeSnackbarContent(
+            title: 'Warning!',
+            message: 'Please select Category and Sub-category',
+            contentType: ContentType.warning,
+          ),
         ),
       );
       return;

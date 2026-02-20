@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import '../providers/api_provider.dart';
 
 class BookingCalendarViewModel extends ChangeNotifier {
@@ -39,8 +40,15 @@ class BookingCalendarViewModel extends ChangeNotifier {
   Future<void> createService(BuildContext context) async {
     if (selectedDays.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select at least one availability date'),
+        SnackBar(
+          elevation: 0,
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.transparent,
+          content: AwesomeSnackbarContent(
+            title: 'Warning!',
+            message: 'Please select at least one availability date',
+            contentType: ContentType.warning,
+          ),
         ),
       );
       return;
@@ -82,10 +90,15 @@ class BookingCalendarViewModel extends ChangeNotifier {
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            isEdit
+          elevation: 0,
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.transparent,
+          content: AwesomeSnackbarContent(
+            title: 'Success!',
+            message: isEdit
                 ? 'Service updated successfully'
                 : 'Service created successfully',
+            contentType: ContentType.success,
           ),
         ),
       );
@@ -93,8 +106,15 @@ class BookingCalendarViewModel extends ChangeNotifier {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            isEdit ? 'Failed to update service' : 'Failed to create service',
+          elevation: 0,
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.transparent,
+          content: AwesomeSnackbarContent(
+            title: 'Error!',
+            message: isEdit
+                ? 'Failed to update service'
+                : 'Failed to create service',
+            contentType: ContentType.failure,
           ),
         ),
       );
