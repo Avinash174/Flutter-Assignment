@@ -7,6 +7,9 @@ import '../models/sub_category_model.dart';
 import '../models/service_model.dart';
 import '../providers/api_provider.dart';
 
+/// ViewModel directing the state of the "Add/Edit" service form.
+/// Curates the complex nested logic of dropdowns, forms, image picking,
+/// and routes the synthesized user data to the booking calendar for finalization.
 class AddServiceViewModel extends ChangeNotifier {
   final serviceNameController = TextEditingController();
   final priceController = TextEditingController();
@@ -30,6 +33,8 @@ class AddServiceViewModel extends ChangeNotifier {
     fetchCategories();
   }
 
+  /// Flushes the form state ensuring no residual data exists
+  /// when the user opens "Add Service" from the main management page.
   void initAddMode() {
     editServiceId = '';
     serviceNameController.clear();
@@ -45,6 +50,9 @@ class AddServiceViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Populates the ViewModel precisely matching the `ServiceModel`
+  /// passed from the Home screen when the user taps 'Edit'.
+  /// Triggers related network requests automatically (like fetching related nested sub-categories).
   Future<void> initEditMode(ServiceModel service) async {
     editServiceId = service.id;
     serviceNameController.text = service.serviceName;
@@ -87,6 +95,8 @@ class AddServiceViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Hooks into the Native OS via `image_picker` to fetch media.
+  /// Modifies local state immediately.
   Future<void> pickImage() async {
     try {
       final ImagePicker picker = ImagePicker();
@@ -154,6 +164,8 @@ class AddServiceViewModel extends ChangeNotifier {
     );
   }
 
+  /// Gathers all the validated controller texts, image paths, and network IDs,
+  /// formatting them neatly and propelling them into the next route (Booking Calendar).
   void saveAndContinue(BuildContext context) {
     if (selectedCategory == null || selectedSubCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(

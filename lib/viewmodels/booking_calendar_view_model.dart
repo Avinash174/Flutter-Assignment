@@ -3,6 +3,9 @@ import 'package:intl/intl.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import '../providers/api_provider.dart';
 
+/// Final ViewModel in the Create/Edit Service flow.
+/// Takes the raw data assembled by [AddServiceViewModel], mixes it with
+/// user-selected calendrical data, and flushes it securely to the REST API.
 class BookingCalendarViewModel extends ChangeNotifier {
   DateTime focusedDay = DateTime.now();
   List<DateTime> selectedDays = [];
@@ -13,10 +16,12 @@ class BookingCalendarViewModel extends ChangeNotifier {
 
   Map<String, dynamic> serviceData = {};
 
+  /// Binds the `serviceData` passed dynamically via route arguments.
   void initData(Map<String, dynamic> data) {
     serviceData = data;
   }
 
+  /// Toggles dates on or off the multi-select calendar.
   void onDaySelected(DateTime selectedDay, DateTime focusedDay_) {
     focusedDay = focusedDay_;
     if (selectedDays.contains(selectedDay)) {
@@ -80,6 +85,8 @@ class BookingCalendarViewModel extends ChangeNotifier {
       'availability': availabilityStr,
     };
 
+    /// Dynamically routes the logic based on whether we are 'CREATING' a new
+    /// object or 'UPDATING' an existing one. Avoids duplicating boilerplate API forms.
     final isEdit = postData.containsKey('id') && postData['id'] != null;
     final success = isEdit
         ? await ApiProvider.updateService(postData['id'], postData)
