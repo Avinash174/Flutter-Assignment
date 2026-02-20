@@ -1,4 +1,4 @@
-# Service Management Module - Flutter Assignment
+# Flutter Assignment
 
 ## 🚀 Overview
 
