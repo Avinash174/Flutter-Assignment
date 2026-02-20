@@ -72,18 +72,32 @@ class BookingCalendarViewModel extends ChangeNotifier {
       'availability': availabilityStr,
     };
 
-    final success = await ApiProvider.createService(postData);
+    final isEdit = postData.containsKey('id') && postData['id'] != null;
+    final success = isEdit
+        ? await ApiProvider.updateService(postData['id'], postData)
+        : await ApiProvider.createService(postData);
+
     if (!context.mounted) return;
 
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Service created successfully')),
+        SnackBar(
+          content: Text(
+            isEdit
+                ? 'Service updated successfully'
+                : 'Service created successfully',
+          ),
+        ),
       );
       Navigator.popUntil(context, ModalRoute.withName('/manage-services'));
     } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Failed to create service')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isEdit ? 'Failed to update service' : 'Failed to create service',
+          ),
+        ),
+      );
     }
   }
 }

@@ -139,7 +139,7 @@ class ManageServicesView extends StatelessWidget {
                               color: Colors.grey,
                             ),
                             onPressed: () =>
-                                viewModel.deleteService(service.id),
+                                viewModel.deleteService(context, service.id),
                           ),
                         ],
                       ),

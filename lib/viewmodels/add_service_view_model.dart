@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/category_model.dart';
 import '../models/sub_category_model.dart';
+import '../models/service_model.dart';
 import '../providers/api_provider.dart';
 
 class AddServiceViewModel extends ChangeNotifier {
@@ -19,15 +20,58 @@ class AddServiceViewModel extends ChangeNotifier {
   final subCategoryController = TextEditingController();
 
   String selectedImagePath = '';
+  String editServiceId = '';
 
   List<CategoryModel> categories = [];
   List<SubCategoryModel> subCategories = [];
 
-  AddServiceViewModel({String? id}) {
-    if (id != null) {
-      serviceNameController.text = "Home Cleaning";
-    }
+  AddServiceViewModel() {
     fetchCategories();
+  }
+
+  void initAddMode() {
+    editServiceId = '';
+    serviceNameController.clear();
+    priceController.clear();
+    discountController.clear();
+    durationController.clear();
+    descriptionController.clear();
+    categoryController.clear();
+    subCategoryController.clear();
+    selectedCategory = null;
+    selectedSubCategory = null;
+    selectedImagePath = '';
+    notifyListeners();
+  }
+
+  Future<void> initEditMode(ServiceModel service) async {
+    editServiceId = service.id;
+    serviceNameController.text = service.serviceName;
+    priceController.text = service.price.toString();
+    durationController.text = service.duration.toString();
+    descriptionController.text = service.description;
+
+    categoryController.text = service.categoryName;
+    subCategoryController.text = service.subCategoryName;
+    selectedImagePath = service.imageUrl;
+
+    if (service.categoryId.isNotEmpty) {
+      selectedCategory = CategoryModel(
+        id: service.categoryId,
+        name: service.categoryName,
+      );
+      await fetchSubCategories(service.categoryId);
+    }
+
+    if (service.subCategoryId.isNotEmpty) {
+      selectedSubCategory = SubCategoryModel(
+        id: service.subCategoryId,
+        name: service.subCategoryName,
+        categoryId: service.categoryId,
+      );
+    }
+
+    notifyListeners();
   }
 
   Future<void> fetchCategories() async {
@@ -122,10 +166,11 @@ class AddServiceViewModel extends ChangeNotifier {
       context,
       '/booking-calendar',
       arguments: {
+        if (editServiceId.isNotEmpty) 'id': editServiceId,
         'serviceName': serviceNameController.text,
         'description': descriptionController.text,
-        'category': selectedCategory?.id,
-        'subCategory': selectedSubCategory?.id,
+        'category': selectedCategory?.id ?? '', // backend might expect ID
+        'subCategory': selectedSubCategory?.id ?? '',
         'price': int.tryParse(priceController.text) ?? 0,
         'duration': int.tryParse(durationController.text) ?? 0,
         'imagePath': selectedImagePath,
