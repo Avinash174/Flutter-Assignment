@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app requires access to the photo library to upload business logos.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app requires access to the camera to take business logo photos.</string>
 </dict>
 </plist>

@@ -19,3 +19,14 @@ This is a Flutter application refactored from GetX to the Provider architecture.
 
 1. `flutter pub get`
 2. `flutter run`
+
+## Required Packages
+
+If running locally and dependencies are missing, ensure you run the following:
+
+```bash
+flutter pub add image_picker
+flutter pub add awesome_snackbar_content
+```
+
+Note: Ensure you fully stop and completely rebuild the APK or iOS runner after fetching Native bindings for the `image_picker`.
