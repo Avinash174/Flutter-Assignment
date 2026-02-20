@@ -23,11 +23,7 @@ class ApiProvider {
           'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODFjY2ViMjQ2MzI4M2MzOTc5ODIwYiIsInJvbGUiOiJwcm92aWRlciIsImlhdCI6MTc3MTQ4ODg4OSwiZXhwIjoxNzcyMDkzNjg5fQ.v7KHJfWDXh72hC14BDPwZ1Lp1mrlAFiTxIpcvfIdZGg';
     }
 
-    return {
-      'token': token,
-      'Authorization': 'Bearer $token',
-      'Content-Type': 'application/json',
-    };
+    return {'token': token, 'Content-Type': 'application/json'};
   }
 
   /// Fetches a list of parent categories from the Node Backend.
@@ -106,7 +102,7 @@ class ApiProvider {
 
       final postBody = Map<String, dynamic>.from(serviceData);
 
-      // Handle image: convert to Base64 if it's a local file path
+      // Handle image: Convert to Base64 if needed, OR send placeholder to match requirement
       final String? imagePath = postBody['imagePath'] as String?;
       if (imagePath != null &&
           imagePath.isNotEmpty &&
@@ -115,18 +111,25 @@ class ApiProvider {
           final file = File(imagePath);
           final bytes = await file.readAsBytes();
           final base64Image = base64Encode(bytes);
+          // If the server doesn't support Base64, we might need a different approach,
+          // but for now we follow the Data URI pattern.
           postBody['image'] = 'data:image/jpeg;base64,$base64Image';
         } catch (e) {
-          log('Error reading image file for creation: $e', error: e);
-          postBody['image'] = '';
+          log('Error reading image file: $e');
+          postBody['image'] = 'image.png'; // Fallback to placeholder
         }
       } else if (imagePath != null && imagePath.startsWith('http')) {
         postBody['image'] = imagePath;
       } else {
-        postBody['image'] = '';
+        postBody['image'] = 'image.png'; // Placeholder from requirement
       }
+
       postBody.remove('imagePath');
       postBody.remove('id');
+
+      // Ensure price and duration are ints
+      postBody['price'] = int.tryParse(postBody['price'].toString()) ?? 0;
+      postBody['duration'] = int.tryParse(postBody['duration'].toString()) ?? 0;
 
       log('POST $url');
       log('Body: ${jsonEncode(postBody)}');
@@ -169,13 +172,20 @@ class ApiProvider {
           final base64Image = base64Encode(bytes);
           postBody['image'] = 'data:image/jpeg;base64,$base64Image';
         } catch (e) {
-          log('Error reading image for update: $e', error: e);
+          log('Error reading image for update: $e');
+          postBody['image'] = 'image.png';
         }
       } else if (imagePath != null && imagePath.startsWith('http')) {
         postBody['image'] = imagePath;
+      } else {
+        postBody['image'] = 'image.png';
       }
       postBody.remove('imagePath');
       postBody.remove('id');
+
+      // Ensure price and duration are ints
+      postBody['price'] = int.tryParse(postBody['price'].toString()) ?? 0;
+      postBody['duration'] = int.tryParse(postBody['duration'].toString()) ?? 0;
 
       log('PUT $url');
       log('Body: ${jsonEncode(postBody)}');
