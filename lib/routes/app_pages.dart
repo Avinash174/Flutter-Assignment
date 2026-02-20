@@ -6,7 +6,7 @@ import '../views/booking_calendar_view.dart';
 class AppPages {
   AppPages._();
 
-  static const INITIAL = '/manage-services';
+  static const initialRoute = '/manage-services';
 
   static final Map<String, WidgetBuilder> routes = {
     '/manage-services': (context) => const ManageServicesView(),

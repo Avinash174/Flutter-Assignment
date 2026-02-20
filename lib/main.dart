@@ -18,7 +18,7 @@ void main() {
       ],
       child: MaterialApp(
         title: "Assignment",
-        initialRoute: AppPages.INITIAL,
+        initialRoute: AppPages.initialRoute,
         routes: AppPages.routes,
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
