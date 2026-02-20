@@ -10,6 +10,9 @@ class ServiceModel {
   final int duration;
   final String imageUrl;
 
+  final String startTime;
+  final String endTime;
+
   ServiceModel({
     required this.id,
     required this.serviceName,
@@ -21,6 +24,8 @@ class ServiceModel {
     required this.price,
     required this.duration,
     required this.imageUrl,
+    this.startTime = '',
+    this.endTime = '',
   });
 
   factory ServiceModel.fromJson(Map<String, dynamic> json) {
@@ -48,12 +53,24 @@ class ServiceModel {
       description: json['description'] ?? '',
       price: json['price'] ?? 0,
       duration: json['duration'] ?? 0,
-      imageUrl:
-          json['image'] != null &&
-              (json['image'].toString().startsWith('http') ||
-                  json['image'].toString().startsWith('data:image'))
-          ? json['image']
-          : 'https://picsum.photos/seed/${json['_id'] ?? "random"}/100/100', // fallback to valid placeholder if not real URL
+      imageUrl: _parseImageUrl(json['image']),
+      startTime: json['startTime'] ?? '',
+      endTime: json['endTime'] ?? '',
     );
+  }
+
+  static String _parseImageUrl(dynamic image) {
+    if (image == null) return '';
+    String url = image.toString();
+    if (url.isEmpty || url == 'null') return '';
+
+    // If it's a full URL or a Base64 string, use it directly.
+    if (url.startsWith('http') || url.startsWith('data:image')) {
+      return url;
+    }
+
+    // If it's just a filename, it might be legacy or broken, so we default to empty
+    // and let the UI show a nice placeholder icon.
+    return '';
   }
 }

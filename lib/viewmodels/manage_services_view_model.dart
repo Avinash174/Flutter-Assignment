@@ -20,11 +20,17 @@ class ManageServicesViewModel extends ChangeNotifier {
   Future<void> fetchServices() async {
     isLoading = true;
     notifyListeners();
-    final data = await ApiProvider.getServices();
-    // Newest service items at the top
-    services = data.reversed.toList();
-    isLoading = false;
-    notifyListeners();
+    try {
+      final data = await ApiProvider.getServices();
+      // Newest service items at the top
+      services = data.reversed.toList();
+      debugPrint('Fetched ${services.length} services');
+    } catch (e) {
+      debugPrint('Error in fetchServices: $e');
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
   /// Deletes a service via Optimistic UI updates.

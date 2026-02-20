@@ -167,19 +167,30 @@ class AddServiceViewModel extends ChangeNotifier {
   /// Gathers all the validated controller texts, image paths, and network IDs,
   /// formatting them neatly and propelling them into the next route (Booking Calendar).
   void saveAndContinue(BuildContext context) {
+    if (serviceNameController.text.trim().isEmpty) {
+      _showWarning(context, 'Please enter a service name');
+      return;
+    }
+
     if (selectedCategory == null || selectedSubCategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          elevation: 0,
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: Colors.transparent,
-          content: AwesomeSnackbarContent(
-            title: 'Warning!',
-            message: 'Please select Category and Sub-category',
-            contentType: ContentType.warning,
-          ),
-        ),
-      );
+      _showWarning(context, 'Please select Category and Sub-category');
+      return;
+    }
+
+    final price = int.tryParse(priceController.text) ?? 0;
+    if (price <= 0) {
+      _showWarning(context, 'Price must be greater than 0');
+      return;
+    }
+
+    final duration = int.tryParse(durationController.text) ?? 0;
+    if (duration < 1) {
+      _showWarning(context, 'Duration must be at least 1 minute');
+      return;
+    }
+
+    if (descriptionController.text.trim().isEmpty) {
+      _showWarning(context, 'Please enter a description');
       return;
     }
     Navigator.pushNamed(
@@ -195,6 +206,21 @@ class AddServiceViewModel extends ChangeNotifier {
         'duration': int.tryParse(durationController.text) ?? 0,
         'imagePath': selectedImagePath,
       },
+    );
+  }
+
+  void _showWarning(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        elevation: 0,
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.transparent,
+        content: AwesomeSnackbarContent(
+          title: 'Warning!',
+          message: message,
+          contentType: ContentType.warning,
+        ),
+      ),
     );
   }
 

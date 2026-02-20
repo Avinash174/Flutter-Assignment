@@ -106,31 +106,9 @@ class AddServiceView extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.grey.shade200,
                         borderRadius: BorderRadius.circular(16),
-                        image: DecorationImage(
-                          image: viewModel.selectedImagePath.isNotEmpty
-                              ? (viewModel.selectedImagePath.startsWith('http')
-                                        ? NetworkImage(
-                                            viewModel.selectedImagePath,
-                                          )
-                                        : viewModel.selectedImagePath
-                                              .startsWith('data:image')
-                                        ? MemoryImage(
-                                            base64Decode(
-                                              viewModel.selectedImagePath
-                                                  .split(',')
-                                                  .last,
-                                            ),
-                                          )
-                                        : FileImage(
-                                            File(viewModel.selectedImagePath),
-                                          ))
-                                    as ImageProvider
-                              : const NetworkImage(
-                                  'https://picsum.photos/seed/mechanic/200/200',
-                                ),
-                          fit: BoxFit.cover,
-                        ),
                       ),
+                      clipBehavior: Clip.antiAlias,
+                      child: _buildPreviewImage(viewModel.selectedImagePath),
                     ),
                     Positioned(
                       child: GestureDetector(
@@ -255,5 +233,40 @@ class AddServiceView extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildPreviewImage(String path) {
+    if (path.isEmpty) {
+      return const Icon(Icons.business, color: Colors.grey, size: 40);
+    }
+    if (path.startsWith('http')) {
+      return Image.network(
+        path,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) =>
+            const Icon(Icons.broken_image, color: Colors.grey, size: 40),
+      );
+    }
+    if (path.startsWith('data:image')) {
+      try {
+        return Image.memory(
+          base64Decode(path.split(',').last),
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) =>
+              const Icon(Icons.broken_image, color: Colors.grey, size: 40),
+        );
+      } catch (e) {
+        return const Icon(Icons.broken_image, color: Colors.grey, size: 40);
+      }
+    }
+    if (path.startsWith('/')) {
+      return Image.file(
+        File(path),
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) =>
+            const Icon(Icons.broken_image, color: Colors.grey, size: 40),
+      );
+    }
+    return const Icon(Icons.broken_image, color: Colors.grey, size: 40);
   }
 }

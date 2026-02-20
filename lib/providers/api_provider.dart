@@ -1,32 +1,38 @@
 import 'dart:convert';
 import 'dart:developer';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../models/category_model.dart';
 import '../models/sub_category_model.dart';
 import '../models/service_model.dart';
+import '../utils/app_constants.dart';
+import '../utils/pref_manager.dart';
 
 /// A singleton-like utility class responsible for all HTTP REST API interactions.
-/// We centralize API requests here so that our ViewModels remain clean and only
-/// govern state and business logic.
 class ApiProvider {
-  static const String baseUrl = 'https://velvook-node.creatamax.in';
-  static const String token =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODFjY2ViMjQ2MzI4M2MzOTc5ODIwYiIsInJvbGUiOiJwcm92aWRlciIsImlhdCI6MTc3MTQ4ODg4OSwiZXhwIjoxNzcyMDkzNjg5fQ.v7KHJfWDXh72hC14BDPwZ1Lp1mrlAFiTxIpcvfIdZGg';
+  /// Internal helper to generate headers by fetching the token from Shared Preferences.
+  static Future<Map<String, String>> _getHeaders() async {
+    String token = await PrefManager.getToken();
 
-  /// Internal helper to generate headers. Notice the hardcoded [token] for the
-  /// purpose of this assignment is passed dynamically to every request.
-  static Map<String, String> get headers => {
-    'token': token,
-    'Authorization': 'Bearer $token',
-    'Content-Type': 'application/json',
-  };
+    // Fallback for assignment robustness if token is empty
+    if (token.isEmpty) {
+      log(
+        'Warning: Auth token is empty in SharedPrefs. Falling back to default assignment token.',
+      );
+      token =
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODFjY2ViMjQ2MzI4M2MzOTc5ODIwYiIsInJvbGUiOiJwcm92aWRlciIsImlhdCI6MTc3MTQ4ODg4OSwiZXhwIjoxNzcyMDkzNjg5fQ.v7KHJfWDXh72hC14BDPwZ1Lp1mrlAFiTxIpcvfIdZGg';
+    }
+
+    return {
+      'token': token,
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+  }
 
   /// Fetches a list of parent categories from the Node Backend.
-  /// Returns an empty list if there's a network error or missing data.
   static Future<List<CategoryModel>> getCategories() async {
     try {
-      final url = Uri.parse('$baseUrl/api/categories');
+      final url = Uri.parse(AppConstants.categoriesUrl);
       log('GET $url');
       final response = await http.get(url);
       log('Response ${response.statusCode}: ${response.body}');
@@ -44,13 +50,12 @@ class ApiProvider {
     return [];
   }
 
-  /// Uses the specific [categoryId] to retrieve nested sub-categories
-  /// associated with that parent category. Important for cascaded dropdowns.
+  /// Uses the specific [categoryId] to retrieve nested sub-categories.
   static Future<List<SubCategoryModel>> getSubCategories(
     String categoryId,
   ) async {
     try {
-      final url = Uri.parse('$baseUrl/api/categories/$categoryId');
+      final url = Uri.parse('${AppConstants.categoriesUrl}/$categoryId');
       log('GET $url');
       final response = await http.get(url);
       log('Response ${response.statusCode}: ${response.body}');
@@ -71,10 +76,10 @@ class ApiProvider {
   }
 
   /// Fetches the user's specific services.
-  /// Used by [ManageServicesViewModel] to populate the main UI.
   static Future<List<ServiceModel>> getServices() async {
     try {
-      final url = Uri.parse('$baseUrl/api/providers/services');
+      final url = Uri.parse(AppConstants.servicesUrl);
+      final headers = await _getHeaders();
       log('GET $url');
       final response = await http.get(url, headers: headers);
       log('Response ${response.statusCode}: ${response.body}');
@@ -92,55 +97,53 @@ class ApiProvider {
     return [];
   }
 
-  /// Creates a completely new service.
-  /// Takes a complete parsed [serviceData] map from [BookingCalendarViewModel].
+  /// Creates a completely new service using MultipartRequest (FormData).
   static Future<bool> createService(Map<String, dynamic> serviceData) async {
     try {
-      final url = Uri.parse('$baseUrl/api/providers/services');
+      final url = Uri.parse(AppConstants.servicesUrl);
+      final headers = await _getHeaders();
+      // Remove application/json as MultipartRequest sets its own content-type
+      headers.remove('Content-Type');
 
-      final postBody = Map<String, dynamic>.from(serviceData);
+      var request = http.MultipartRequest('POST', url);
+      request.headers.addAll(headers);
 
-      // Process local image into base64 data URI if present
-      final String? imagePath = postBody['imagePath'] as String?;
+      // Add simple fields
+      serviceData.forEach((key, value) {
+        if (key != 'imagePath' && key != 'id' && key != 'availability') {
+          request.fields[key] = value.toString();
+        }
+      });
+
+      // Handle availability (List of Maps) as a JSON string
+      if (serviceData['availability'] != null) {
+        request.fields['availability'] = jsonEncode(
+          serviceData['availability'],
+        );
+      }
+
+      // Handle image file upload
+      final String? imagePath = serviceData['imagePath'] as String?;
       if (imagePath != null &&
           imagePath.isNotEmpty &&
           !imagePath.startsWith('http')) {
-        try {
-          final file = File(imagePath);
-          final bytes = await file.readAsBytes();
-          final base64Image = base64Encode(bytes);
-          // Assuming JPEG for now, but could infer from file extension if needed
-          postBody['image'] = 'data:image/jpeg;base64,$base64Image';
-          postBody.remove(
-            'imagePath',
-          ); // Remove the local path, replace with base64 data
-        } catch (e) {
-          log('Error reading image file for creation: $e', error: e);
-          postBody.remove('imagePath'); // Remove path if file cannot be read
-        }
+        request.files.add(
+          await http.MultipartFile.fromPath('image', imagePath),
+        );
       } else if (imagePath != null && imagePath.startsWith('http')) {
-        // If it's an existing URL, keep it as 'image'
-        postBody['image'] = imagePath;
-        postBody.remove('imagePath');
-      } else {
-        // No image path or empty path, ensure 'image' key is not present if it was 'imagePath'
-        postBody.remove('imagePath');
+        // If it's already a URL, we send it as a string field
+        request.fields['image'] = imagePath;
       }
 
-      // Ensure other fields are correctly formatted for JSON
-      postBody.remove('id'); // ID is not needed for creation
+      log('POST (Multipart) $url');
+      log('Fields: ${request.fields}');
 
-      log('POST $url');
-      log('Body: ${jsonEncode(postBody)}');
-
-      final response = await http.post(
-        url,
-        headers: headers,
-        body: jsonEncode(postBody),
-      );
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
 
       log('Create Service Status Code: ${response.statusCode}');
       log('Create Service Response: ${response.body}');
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
       }
@@ -150,51 +153,53 @@ class ApiProvider {
     return false;
   }
 
-  /// Updates an existing service by submitting a PUT request against its specific [id].
-  /// Differentiates from [createService] specifically through the usage of http.put instead of http.post.
+  /// Updates an existing service using MultipartRequest (FormData).
   static Future<bool> updateService(
     String id,
     Map<String, dynamic> serviceData,
   ) async {
     try {
-      final url = Uri.parse('$baseUrl/api/providers/services/$id');
+      final url = Uri.parse('${AppConstants.servicesUrl}/$id');
+      final headers = await _getHeaders();
+      headers.remove('Content-Type');
 
-      final postBody = Map<String, dynamic>.from(serviceData);
+      // Note: Some backends require POST with _method=PUT for multipart updates,
+      // but we'll try PUT first as specified in standard REST.
+      var request = http.MultipartRequest('PUT', url);
+      request.headers.addAll(headers);
 
-      final String? imagePath = postBody['imagePath'] as String?;
+      serviceData.forEach((key, value) {
+        if (key != 'imagePath' && key != 'id' && key != 'availability') {
+          request.fields[key] = value.toString();
+        }
+      });
+
+      if (serviceData['availability'] != null) {
+        request.fields['availability'] = jsonEncode(
+          serviceData['availability'],
+        );
+      }
+
+      final String? imagePath = serviceData['imagePath'] as String?;
       if (imagePath != null &&
           imagePath.isNotEmpty &&
           !imagePath.startsWith('http')) {
-        try {
-          final file = File(imagePath);
-          final bytes = await file.readAsBytes();
-          final base64Image = base64Encode(bytes);
-          postBody['image'] = 'data:image/jpeg;base64,$base64Image';
-          postBody.remove('imagePath');
-        } catch (e) {
-          log('Error reading image for update: $e', error: e);
-          postBody.remove('imagePath');
-        }
+        request.files.add(
+          await http.MultipartFile.fromPath('image', imagePath),
+        );
       } else if (imagePath != null && imagePath.startsWith('http')) {
-        postBody['image'] = imagePath;
-        postBody.remove('imagePath');
-      } else {
-        postBody.remove('imagePath');
+        request.fields['image'] = imagePath;
       }
 
-      postBody.remove('id');
+      log('PUT (Multipart) $url');
+      log('Fields: ${request.fields}');
 
-      log('PUT $url');
-      log('Body: ${jsonEncode(postBody)}');
-
-      final response = await http.put(
-        url,
-        headers: headers,
-        body: jsonEncode(postBody),
-      );
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
 
       log('Update Service Status Code: ${response.statusCode}');
       log('Update Service Response: ${response.body}');
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
       }
@@ -207,7 +212,8 @@ class ApiProvider {
   /// Removes a service matching the [id] from the database.
   static Future<bool> deleteService(String id) async {
     try {
-      final url = Uri.parse('$baseUrl/api/providers/services/$id');
+      final url = Uri.parse('${AppConstants.servicesUrl}/$id');
+      final headers = await _getHeaders();
       log('DELETE $url');
       final response = await http.delete(url, headers: headers);
       log('Delete ${response.statusCode}: ${response.body}');
