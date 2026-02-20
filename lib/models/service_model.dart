@@ -49,7 +49,9 @@ class ServiceModel {
       price: json['price'] ?? 0,
       duration: json['duration'] ?? 0,
       imageUrl:
-          json['image'] != null && json['image'].toString().startsWith('http')
+          json['image'] != null &&
+              (json['image'].toString().startsWith('http') ||
+                  json['image'].toString().startsWith('data:image'))
           ? json['image']
           : 'https://picsum.photos/seed/${json['_id'] ?? "random"}/100/100', // fallback to valid placeholder if not real URL
     );

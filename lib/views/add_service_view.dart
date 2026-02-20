@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -110,6 +111,15 @@ class AddServiceView extends StatelessWidget {
                               ? (viewModel.selectedImagePath.startsWith('http')
                                         ? NetworkImage(
                                             viewModel.selectedImagePath,
+                                          )
+                                        : viewModel.selectedImagePath
+                                              .startsWith('data:image')
+                                        ? MemoryImage(
+                                            base64Decode(
+                                              viewModel.selectedImagePath
+                                                  .split(',')
+                                                  .last,
+                                            ),
                                           )
                                         : FileImage(
                                             File(viewModel.selectedImagePath),
