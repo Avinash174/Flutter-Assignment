@@ -108,4 +108,50 @@ class ApiProvider {
     }
     return false;
   }
+
+  static Future<bool> updateService(
+    String id,
+    Map<String, dynamic> serviceData,
+  ) async {
+    try {
+      final url = Uri.parse('$baseUrl/api/providers/services/$id');
+
+      final postBody = Map<String, dynamic>.from(serviceData);
+      postBody['image'] = serviceData['imagePath'] ?? 'image.png';
+      postBody.remove('imagePath');
+
+      log('PUT JSON $url');
+      log('Fields: $postBody');
+
+      final response = await http.put(
+        url,
+        headers: headers,
+        body: jsonEncode(postBody),
+      );
+
+      log('Update Service Status Code: ${response.statusCode}');
+      log('Update Service Response: ${response.body}');
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      }
+    } catch (e) {
+      log('Error updating service: $e', error: e);
+    }
+    return false;
+  }
+
+  static Future<bool> deleteService(String id) async {
+    try {
+      final url = Uri.parse('$baseUrl/api/providers/services/$id');
+      log('DELETE $url');
+      final response = await http.delete(url, headers: headers);
+      log('Delete ${response.statusCode}: ${response.body}');
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      }
+    } catch (e) {
+      log('Error deleting service: $e', error: e);
+    }
+    return false;
+  }
 }
