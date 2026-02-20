@@ -19,7 +19,7 @@ void main() {
       child: MaterialApp(
         title: "Assignment",
         initialRoute: AppPages.initialRoute,
-        routes: AppPages.routes,
+        onGenerateRoute: AppPages.onGenerateRoute,
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           scaffoldBackgroundColor: AppTheme.backgroundColor,
